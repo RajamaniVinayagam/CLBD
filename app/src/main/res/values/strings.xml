@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_face_name">Train Location Detector</string>
+    <string name="app_name">CLBD</string>
+    <string name="action_settings">Settings</string>
+    <string name="Train">Train number</string>
+    <string name="action">Select the Train for schedule</string>
+    <string name="from">Starting at:</string>
+    <string name="to">Destination :</string>
+    <string name="start">Depart time :</string>
+    <string name="stop">Arrival time:</string>
+    <string name="current">My location</string>
+    <string name="trainCurrent">Train location</string>
+    <string name="expect">Expected Time :</string>
+
+    <string name="train_prompt">Choose a Train</string>
+    <string name="train1">Train no: 12345</string>
+    <string name="Search">Search</string>
+
+    <string-array name="train_arrays">
+        <item>Choose a Train</item>
+        <item>Train no: 12345</item>
+        <item>Train no: 67890</item>
+        <item>Train no: 54321</item>
+        <item>Train no: 09876</item>
+    </string-array>
+
+</resources>
