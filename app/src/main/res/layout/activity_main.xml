@@ -29,7 +29,7 @@
 
         <LinearLayout
             android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:layout_width="160dp"
             android:layout_height="fill_parent"
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
@@ -44,7 +44,8 @@
                 android:textSize="12sp"
                 android:layout_marginTop="15dp"
                 android:layout_marginLeft="10dp"
-                android:layout_marginStart="10dp" />
+                android:layout_marginStart="10dp"
+                android:id="@+id/trainStart" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -54,7 +55,8 @@
                 android:textSize="12sp"
                 android:layout_marginTop="15dp"
                 android:layout_marginLeft="10dp"
-                android:layout_marginStart="10dp" />
+                android:layout_marginStart="10dp"
+                android:id="@+id/dt" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -62,7 +64,7 @@
                 android:text="@string/current"
                 android:textStyle="bold"
                 android:textSize="12sp"
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="15dp"
                 android:layout_marginLeft="10dp"
                 android:layout_marginStart="10dp" />
 
@@ -80,21 +82,21 @@
             android:layout_toRightOf="@+id/linearSession1">
 
             <TextView
-                android:layout_width="70dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
                 android:layout_marginLeft="10dp"
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="15dp"
-                android:id="@+id/trainStart" />
+                android:id="@+id/trainS" />
 
             <TextView
-                android:layout_width="70dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
                 android:layout_marginLeft="10dp"
                 android:layout_marginStart="10dp"
-                android:layout_marginTop="15dp" />
+                android:layout_marginTop="15dp"/>
 
         </LinearLayout>
 
@@ -167,7 +169,8 @@
                 android:textSize="12sp"
                 android:layout_marginLeft="10dp"
                 android:layout_marginStart="10dp"
-                android:layout_marginTop="15dp" />
+                android:layout_marginTop="15dp"
+                android:id="@+id/at" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -193,7 +196,7 @@
         <EditText
             android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:id="@+id/currentLoc"
+            android:id="@+id/myLocation"
             android:textSize="12sp"
             android:layout_marginLeft="10dp"
             android:layout_marginStart="10dp"
@@ -215,7 +218,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/trainLoc"
+            android:id="@+id/trainLocation"
             android:textSize="12sp"
             android:textStyle="italic"
             android:layout_marginTop="10dp"
@@ -245,5 +248,15 @@
         android:layout_marginRight="20dp"
         android:layout_marginEnd="20dp"
         android:onClick="navigate"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/ll"
+        android:layout_below="@+id/content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:visibility="invisible" />
 
 </RelativeLayout>
