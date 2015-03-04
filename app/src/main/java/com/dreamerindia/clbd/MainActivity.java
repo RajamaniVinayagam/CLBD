@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
                         break;
                     default:
                         Toast.makeText(getApplicationContext(),
-                                String.valueOf(spinner.getItemAtPosition(position) + " Schedule not available"), Toast.LENGTH_SHORT).show();
+                                String.valueOf("Schedule not available for " +spinner.getItemAtPosition(position)), Toast.LENGTH_SHORT).show();
                         break;
                 }
             }

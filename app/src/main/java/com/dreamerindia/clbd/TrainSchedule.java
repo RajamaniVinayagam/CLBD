@@ -63,7 +63,7 @@ public class TrainSchedule extends FragmentActivity {
     Marker marker;
 
     GoogleMap googleMap;
-    TextView trainStart, trainLocation, expectTime, ll, dt, at;
+    TextView trainStart, trainLocation, expectTime, ll, dt, at,traintemp;
     EditText myLocation, destination;
     Handler handler = null;
     Runnable runnable = null;
@@ -88,6 +88,7 @@ public class TrainSchedule extends FragmentActivity {
         ll = (TextView) findViewById(R.id.ll);
         at = (TextView) findViewById(R.id.at);
         dt = (TextView) findViewById(R.id.dt);
+        traintemp = (TextView) findViewById(R.id.traintemp);
         myLocation = (EditText) findViewById(R.id.myLocation);
         this.markerPoints = new ArrayList<LatLng>();
         supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.googleMap);
@@ -118,60 +119,6 @@ public class TrainSchedule extends FragmentActivity {
             }
         });
 
-        // Setting onclick event listener for the map
-//        this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-//            @Override
-//            public void onMapClick(LatLng point) {
-//                // Already two locations
-//                if (TrainSchedule.this.markerPoints.size() > 0) {
-//                    TrainSchedule.this.markerPoints.clear();
-////                    TrainSchedule.this.googleMap.clear();
-//                }
-//
-//                // Adding new item to the ArrayList
-//                TrainSchedule.this.markerPoints.add(point);
-//
-//                // Creating MarkerOptions
-//                MarkerOptions options = new MarkerOptions();
-//
-//                // Setting the position of the marker
-//                options.position(point);
-//
-//                /**
-//                 * For the start location, the color of marker is GREEN and
-//                 * for the end location, the color of marker is RED.
-//                 */
-//                if (TrainSchedule.this.markerPoints.size() == 1) {
-//                    options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-//                } else if (TrainSchedule.this.markerPoints.size() == 2) {
-//                    options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-//                }
-//
-//                // Add new marker to the Google Map Android API V2
-//                TrainSchedule.this.googleMap.addMarker(options);
-//
-//                // Checks, whether start and end locations are captured
-//                if (TrainSchedule.this.markerPoints.size() >= 1) {
-//                    String temp = trainLocation.getText().toString();
-//                    StringTokenizer tokens = new StringTokenizer(temp, ",");
-//                    String first = tokens.nextToken();
-//                    String second = tokens.nextToken();
-//                    double fromLat = Double.parseDouble(first);
-//                    double fromLng = Double.parseDouble(second);
-//                    LatLng origin = new LatLng(fromLat, fromLng);
-////                    LatLng origin = TrainSchedule.this.markerPoints.get(0);
-//                    LatLng dest = TrainSchedule.this.markerPoints.get(0);
-//
-//                    // Getting URL to the Google Directions API
-//                    String url = TrainSchedule.this.getDirectionsUrl(origin, dest);
-//
-//                    DownloadTask downloadTask = new DownloadTask();
-//
-//                    // Start downloading json data from Google Directions API
-//                    downloadTask.execute(url);
-//                }
-//            }
-//        });
         handler = new Handler();
         runnable = new Runnable() {
             public void run() {
@@ -188,6 +135,13 @@ public class TrainSchedule extends FragmentActivity {
         SimpleDateFormat df = new SimpleDateFormat("HH:mm");
         String formattedDate = df.format(c.getTime());
         dt.append(" " + formattedDate);
+        String timeConvert = at.getText().toString();
+        StringTokenizer tokens = new StringTokenizer(timeConvert, " ");
+        String first = tokens.nextToken();
+        String second = tokens.nextToken();
+        String third = tokens.nextToken();
+        String fourth = tokens.nextToken();
+        ;
     }
 
     public void navigate(View v) {
@@ -213,11 +167,11 @@ public class TrainSchedule extends FragmentActivity {
                 Geocoder gc = new Geocoder(this);
                 List<Address> list = gc.getFromLocationName(location, 1);
                 Address add = list.get(0);
-                myLocality = add.getLocality();
+                String myLoc = add.getLocality();
                 double toLat = add.getLatitude();
                 double toLng = add.getLongitude();
                 myl = new LatLng(toLat, toLng);
-                setMyLocationMarker(myLocality, toLat, toLng);
+                setMyLocationMarker(myLoc, toLat, toLng);
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.i("Error", "check destination Marker");
@@ -236,6 +190,7 @@ public class TrainSchedule extends FragmentActivity {
                 Log.i("Error", "check destination Marker");
             }
             String urlTwo = TrainSchedule.this.getDirectionsUrl(myl, dest);
+
             DownloadTask downloadTaskTwo = new DownloadTask();
             downloadTaskTwo.execute(urlTwo);
             // Getting URL to the Google Directions API
@@ -245,7 +200,9 @@ public class TrainSchedule extends FragmentActivity {
 
             // Start downloading json data from Google Directions API
             downloadTask.execute(url);
-
+            String urlThree = TrainSchedule.this.getDirectionsUrlTwo(origin, dest);
+            DownloadTaskTWO downloadTaskThree = new DownloadTaskTWO();
+            downloadTaskThree.execute(urlThree);
         }
     }
 
@@ -254,6 +211,7 @@ public class TrainSchedule extends FragmentActivity {
             public void run() {
                 {
                     new GetLocationFromUrl().execute("http://www.embeddedcollege.org/rewebservices/location.txt");
+
                 }
             }
         }).start();
@@ -372,9 +330,9 @@ public class TrainSchedule extends FragmentActivity {
             super.onPostExecute(result);
 
             ParserTask parserTask = new ParserTask();
-
             // Invokes the thread for parsing the JSON data
             parserTask.execute(result);
+
 
         }
     }
@@ -454,6 +412,178 @@ public class TrainSchedule extends FragmentActivity {
         }
     }
 
+    private String getDirectionsUrlTwo(LatLng origin, LatLng dest) {
+        // Origin of route
+        String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
+        //waypoints
+        //    String str_waypoints = "waypoints=" + way.latitude + "," + way.longitude;
+        // Destination of route
+        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+
+        // Sensor enabled
+        String sensor = "sensor=false";
+
+        // Building the parameters to the web service
+        String parameters = str_origin + "&" + str_dest + "&" + sensor;
+
+        // Output format
+        String output = "json";
+
+        // Building the url to the web service
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
+
+        return url;
+    }
+
+    /**
+     * A method to download json data from url
+     */
+    private String downloadUrlTWO(String strUrl) throws IOException {
+        String data = "";
+        InputStream iStream = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(strUrl);
+
+            // Creating an http connection to communicate with url
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            // Connecting to url
+            urlConnection.connect();
+
+            // Reading data from url
+            iStream = urlConnection.getInputStream();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
+
+            StringBuffer sb = new StringBuffer();
+
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+
+            data = sb.toString();
+
+            br.close();
+
+        } catch (Exception e) {
+            Log.d("Exception while downloading url", e.toString());
+        } finally {
+            iStream.close();
+            urlConnection.disconnect();
+        }
+        return data;
+    }
+
+    // Fetches data from url passed
+    private class DownloadTaskTWO extends AsyncTask<String, Void, String> {
+        // Downloading data in non-ui thread
+        @Override
+        protected String doInBackground(String... url) {
+
+            // For storing data from web service
+            String data = "";
+
+            try {
+                // Fetching the data from web service
+                data = TrainSchedule.this.downloadUrlTWO(url[0]);
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
+            }
+            return data;
+        }
+
+        // Executes in UI thread, after the execution of
+        // doInBackground()
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+            ParserTaskTwo parserTask = new ParserTaskTwo();
+            // Invokes the thread for parsing the JSON data
+            parserTask.execute(result);
+
+
+        }
+    }
+
+    /**
+     * A class to parse the Google Places in JSON format
+     */
+
+    private class ParserTaskTwo extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+
+        // Parsing the data in non-ui thread
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+
+            try {
+                jObject = new JSONObject(jsonData[0]);
+                DirectionsJSONParser parser = new DirectionsJSONParser();
+
+                // Starts parsing data
+                routes = parser.parse(jObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        // Executes in UI thread, after the parsing process
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+            ArrayList<LatLng> points = null;
+            PolylineOptions lineOptions = null;
+            MarkerOptions markerOptions = new MarkerOptions();
+            String distance = "";
+            String duration = "";
+
+            if (result.size() < 1) {
+                Toast.makeText(TrainSchedule.this.getBaseContext(), "No Points", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Traversing through all the routes
+            for (int i = 0; i < result.size(); i++) {
+                points = new ArrayList<LatLng>();
+                lineOptions = new PolylineOptions();
+
+                // Fetching i-th route
+                List<HashMap<String, String>> path = result.get(i);
+
+                // Fetching all the points in i-th route
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap<String, String> point = path.get(j);
+
+                    if (j == 0) { // Get distance from the list
+                        distance = point.get("distance");
+                        continue;
+                    } else if (j == 1) { // Get duration from the list
+                        duration = point.get("duration");
+                        continue;
+                    }
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lng = Double.parseDouble(point.get("lng"));
+                    LatLng position = new LatLng(lat, lng);
+                    points.add(position);
+                }
+
+                // Adding all the points in the route to LineOptions
+                lineOptions.addAll(points);
+                lineOptions.width(3);
+                lineOptions.color(Color.RED);
+            }
+
+            TrainSchedule.this.at.setText(duration);
+
+            // Drawing polyline in the Google Map for the i-th route
+            TrainSchedule.this.googleMap.addPolyline(lineOptions);
+        }
+    }
+
     private class GetLocationFromUrl extends AsyncTask<String, Void, String> {
         @Override
         protected void onPreExecute() {
@@ -503,17 +633,34 @@ public class TrainSchedule extends FragmentActivity {
                 String second = tokens.nextToken();
                 double fromLat = Double.parseDouble(first);
                 double fromLng = Double.parseDouble(second);
-                trainStartingMarker(myLocality, fromLat, fromLng);
+                String ttemp = traintemp.getText().toString();
                 locationAddress.getAddressFromLocation(fromLat, fromLng,
                         getApplicationContext(), new GeocoderHandler());
                 String temp = trainStart.getText().toString();
-                if (temp.length() == 12) {
+                trainStartingMarker(ttemp, fromLat, fromLng);
+                String dLocation = destination.getText().toString();
+                if (dLocation.length() == 0) {
+                } else {
+                    try {
+                        Geocoder gc = new Geocoder(TrainSchedule.this);
+                        List<Address> list = gc.getFromLocationName(dLocation, 1);
+                        Address add = list.get(0);
+                        myLocality = add.getLocality();
+                        double toLat = add.getLatitude();
+                        double toLng = add.getLongitude();
+                        setDestinationMarker(myLocality, toLat, toLng);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Log.i("Error", "check destination Marker");
+                    }
+                }
+                if (temp.length() < 15) {
                     locationLocality.getLocalityFromLocation(fromLat, fromLng,
                             getApplicationContext(), new GeocoderHand());
                     LatLng ll = new LatLng(fromLat, fromLng);
                     CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, UPDATE_ZOOM);
                     googleMap.moveCamera(update);
-                }
+                }else{}
             }
         }
     }
@@ -578,6 +725,7 @@ public class TrainSchedule extends FragmentActivity {
                     locationAddress = null;
             }
             trainStart.append(" " + locationAddress);
+            traintemp.setText(locationAddress);
         }
     }
 
@@ -586,7 +734,7 @@ public class TrainSchedule extends FragmentActivity {
             marker.remove();
         }
         MarkerOptions options = new MarkerOptions()
-                .title("Train at : " + myLocality)
+                .title("Train at: " + myLocality)
                 .position(new LatLng(lat, lng))
                 .icon(BitmapDescriptorFactory.defaultMarker(
                         BitmapDescriptorFactory.HUE_VIOLET
@@ -607,7 +755,7 @@ public class TrainSchedule extends FragmentActivity {
 
     public void setDestinationMarker(String myLocality, double lat, double lng) {
         MarkerOptions options = new MarkerOptions()
-                .title("Destination : " + myLocality)
+                .title("Destination: " + myLocality)
                 .position(new LatLng(lat, lng))
                 .icon(BitmapDescriptorFactory.defaultMarker(
                         BitmapDescriptorFactory.HUE_VIOLET
