@@ -56,7 +56,7 @@
                 android:layout_marginTop="15dp"
                 android:layout_marginLeft="10dp"
                 android:layout_marginStart="10dp"
-                android:id="@+id/dt" />
+                android:id="@+id/departTime" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -168,7 +168,8 @@
                 android:layout_marginLeft="10dp"
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="15dp"
-                android:id="@+id/at" />
+                android:id="@+id/arrivalTime"
+                android:textStyle="bold"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -179,7 +180,7 @@
                 android:layout_marginLeft="10dp"
                 android:layout_marginStart="10dp"
                 android:layout_gravity="bottom"
-                android:textStyle="italic" />
+                android:textStyle="italic|bold" />
 
         </LinearLayout>
 
@@ -192,7 +193,7 @@
         android:id="@+id/lFinal"
         android:layout_below="@+id/content">
         <EditText
-            android:layout_width="100dp"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:id="@+id/myLocation"
             android:textSize="12sp"
@@ -262,6 +263,20 @@
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:id="@+id/traintemp"
         android:layout_gravity="right"
+        android:visibility="invisible" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/tempArrivalTime"
+        android:visibility="invisible" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/tempExpectTime"
         android:visibility="invisible" />
 
 </RelativeLayout>

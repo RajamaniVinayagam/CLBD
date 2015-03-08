@@ -17,7 +17,9 @@
     <string name="train_prompt">Choose a Train</string>
     <string name="train1">Train no: 12345</string>
     <string name="Search">Search</string>
-
+    <string name="trainTen">Train Number : 12345 will reach the station in another 10 minutes</string>
+    <string name="trainFew">Train Number : 12345 will reach the station in another few minutes</string>
+    <string name="trainReached">You have boarded in Train Number : 12345...  Enjoy your journey</string>
     <string-array name="train_arrays">
         <item>Choose a Train</item>
         <item>Train no: 12345</item>

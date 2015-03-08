@@ -63,7 +63,7 @@ public class TrainSchedule extends FragmentActivity {
     Marker marker;
 
     GoogleMap googleMap;
-    TextView trainStart, trainLocation, expectTime, ll, dt, at,traintemp;
+    TextView trainStart, trainLocation, expectTime, ll, departTime, arrivalTime, traintemp, tempArrivalTime, tempExpectTime;
     EditText myLocation, destination;
     Handler handler = null;
     Runnable runnable = null;
@@ -86,9 +86,11 @@ public class TrainSchedule extends FragmentActivity {
         trainLocation = (TextView) findViewById(R.id.trainLocation);
         expectTime = (TextView) findViewById(R.id.expectTime);
         ll = (TextView) findViewById(R.id.ll);
-        at = (TextView) findViewById(R.id.at);
-        dt = (TextView) findViewById(R.id.dt);
+        arrivalTime = (TextView) findViewById(R.id.arrivalTime);
+        departTime = (TextView) findViewById(R.id.departTime);
         traintemp = (TextView) findViewById(R.id.traintemp);
+        tempExpectTime = (TextView) findViewById(R.id.tempExpectTime);
+        tempArrivalTime = (TextView) findViewById(R.id.tempArrivalTime);
         myLocation = (EditText) findViewById(R.id.myLocation);
         this.markerPoints = new ArrayList<LatLng>();
         supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.googleMap);
@@ -123,25 +125,13 @@ public class TrainSchedule extends FragmentActivity {
         runnable = new Runnable() {
             public void run() {
                 update();
-                handler.postDelayed(runnable, 10000);
+                handler.postDelayed(runnable, 15000);
             }
         };
 
         handler.removeCallbacks(runnable);
-        handler.postDelayed(runnable, 10000);
+        handler.postDelayed(runnable, 15000);
 
-        Calendar c = Calendar.getInstance();
-        System.out.println("Current time => " + c.getTime());
-        SimpleDateFormat df = new SimpleDateFormat("HH:mm");
-        String formattedDate = df.format(c.getTime());
-        dt.append(" " + formattedDate);
-        String timeConvert = at.getText().toString();
-        StringTokenizer tokens = new StringTokenizer(timeConvert, " ");
-        String first = tokens.nextToken();
-        String second = tokens.nextToken();
-        String third = tokens.nextToken();
-        String fourth = tokens.nextToken();
-        ;
     }
 
     public void navigate(View v) {
@@ -203,6 +193,7 @@ public class TrainSchedule extends FragmentActivity {
             String urlThree = TrainSchedule.this.getDirectionsUrlTwo(origin, dest);
             DownloadTaskTWO downloadTaskThree = new DownloadTaskTWO();
             downloadTaskThree.execute(urlThree);
+            time();
         }
     }
 
@@ -210,12 +201,85 @@ public class TrainSchedule extends FragmentActivity {
         new Thread(new Runnable() {
             public void run() {
                 {
-                    new GetLocationFromUrl().execute("http://www.embeddedcollege.org/rewebservices/location.txt");
 
+                    new GetLocationFromUrl().execute("http://www.embeddedcollege.org/rewebservices/location.txt");
+                   // trace();
+//                    String ti = tempExpectTime.getText().toString();
+//                    if (ti.length() != 0) {
+//                        try {
+//                            int mi = Integer.parseInt(ti);
+//                            if (mi < 600 && mi > 470) {
+//                                Toast.makeText(getApplicationContext(), "Train Number : 12345 will reach the station in another 10 minutes", Toast.LENGTH_SHORT).show();
+//                            } else if (mi < 119 && mi > 114) {
+//                                Toast.makeText(getApplicationContext(), "Train Number : 12345 will reach the station in another few minutes", Toast.LENGTH_SHORT).show();
+//                            } else if (mi < 5 && mi > -1) {
+//                                Toast.makeText(getApplicationContext(), "You have boarded in Train Number : 12345... \n Enjoy your journey", Toast.LENGTH_SHORT).show();
+//                            }
+//                        } catch (NumberFormatException nfe) {
+//                            System.out.println("Could not parse " + nfe);
+//                        }
+//                    }
                 }
             }
         }).start();
 
+    }
+    public void trace() {
+        String et = arrivalTime.getText().toString();
+        String location = myLocation.getText().toString();
+
+        if (et.length() == 0) {
+
+        } else {
+            String temp = ll.getText().toString();
+            StringTokenizer tokens = new StringTokenizer(temp, ",");
+            String first = tokens.nextToken();
+            String second = tokens.nextToken();
+            double fromLat = Double.parseDouble(first);
+            double fromLng = Double.parseDouble(second);
+            LatLng origin = new LatLng(fromLat, fromLng);
+            LatLng myl = null;
+            try {
+                Geocoder gc = new Geocoder(this);
+                List<Address> list = gc.getFromLocationName(location, 1);
+                Address add = list.get(0);
+                double toLat = add.getLatitude();
+                double toLng = add.getLongitude();
+                myl = new LatLng(toLat, toLng);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.i("Error", "check timer");
+            }
+            String url = TrainSchedule.this.getDirectionsUrl(origin, myl);
+            DownloadTask downloadTask = new DownloadTask();
+            downloadTask.execute(url);
+            time();
+        }
+    }
+
+    public void time() {
+        int mi = 0;
+        Calendar c = Calendar.getInstance();
+        System.out.println("Current time => " + c.getTime());
+        SimpleDateFormat df = new SimpleDateFormat("hh:mm a");
+        String formattedDate = df.format(c.getTime());
+        if (departTime.getText().toString().length() < 14) {
+            departTime.append(" " + formattedDate);
+        }
+        String att = arrivalTime.getText().toString();
+        String timeConvert = tempArrivalTime.getText().toString();
+        if (att.length() == 0) {
+            try {
+                mi = Integer.parseInt(timeConvert);
+                Toast.makeText(getApplicationContext(), timeConvert, Toast.LENGTH_SHORT).show();
+                c.add(Calendar.SECOND, mi);
+                String fTime = df.format(c.getTime());
+                TrainSchedule.this.arrivalTime.setText(fTime);
+            } catch (NumberFormatException nfe) {
+                System.out.println("Could not parse " + nfe);
+            }
+
+        }
     }
 
     private boolean isGooglePlayServicesAvailable() {
@@ -242,25 +306,29 @@ public class TrainSchedule extends FragmentActivity {
     }
 
     private String getDirectionsUrl(LatLng origin, LatLng dest) {
-        // Origin of route
-        String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
-        //waypoints
-        //    String str_waypoints = "waypoints=" + way.latitude + "," + way.longitude;
-        // Destination of route
-        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+        String url = null;
+        try {        // Origin of route
+            String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
+            //waypoints
+            //    String str_waypoints = "waypoints=" + way.latitude + "," + way.longitude;
+            // Destination of route
+            String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
 
-        // Sensor enabled
-        String sensor = "sensor=false";
+            // Sensor enabled
+            String sensor = "sensor=false";
 
-        // Building the parameters to the web service
-        String parameters = str_origin + "&" + str_dest + "&" + sensor;
+            // Building the parameters to the web service
+            String parameters = str_origin + "&" + str_dest + "&" + sensor;
 
-        // Output format
-        String output = "json";
+            // Output format
+            String output = "json";
 
-        // Building the url to the web service
-        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
-
+            // Building the url to the web service
+            url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
+            return url;
+        } catch (Exception e) {
+            Toast.makeText(getApplicationContext(), "Please check your Internet connection and try again", Toast.LENGTH_LONG).show();
+        }
         return url;
     }
 
@@ -387,7 +455,7 @@ public class TrainSchedule extends FragmentActivity {
                     HashMap<String, String> point = path.get(j);
 
                     if (j == 0) { // Get distance from the list
-                        distance = point.get("distance");
+                        distance = point.get("duration");
                         continue;
                     } else if (j == 1) { // Get duration from the list
                         duration = point.get("duration");
@@ -406,6 +474,7 @@ public class TrainSchedule extends FragmentActivity {
             }
 
             TrainSchedule.this.expectTime.setText(duration);
+            TrainSchedule.this.tempExpectTime.setText(distance);
 
             // Drawing polyline in the Google Map for the i-th route
             TrainSchedule.this.googleMap.addPolyline(lineOptions);
@@ -538,7 +607,7 @@ public class TrainSchedule extends FragmentActivity {
             ArrayList<LatLng> points = null;
             PolylineOptions lineOptions = null;
             MarkerOptions markerOptions = new MarkerOptions();
-            String distance = "";
+            String durationValue = "";
             String duration = "";
 
             if (result.size() < 1) {
@@ -559,7 +628,7 @@ public class TrainSchedule extends FragmentActivity {
                     HashMap<String, String> point = path.get(j);
 
                     if (j == 0) { // Get distance from the list
-                        distance = point.get("distance");
+                        durationValue = point.get("duration");
                         continue;
                     } else if (j == 1) { // Get duration from the list
                         duration = point.get("duration");
@@ -576,9 +645,8 @@ public class TrainSchedule extends FragmentActivity {
                 lineOptions.width(3);
                 lineOptions.color(Color.RED);
             }
-
-            TrainSchedule.this.at.setText(duration);
-
+            TrainSchedule.this.tempArrivalTime.setText(durationValue);
+//            Toast.makeText(getApplicationContext(), durationValue, Toast.LENGTH_LONG).show();
             // Drawing polyline in the Google Map for the i-th route
             TrainSchedule.this.googleMap.addPolyline(lineOptions);
         }
@@ -615,6 +683,7 @@ public class TrainSchedule extends FragmentActivity {
                 return result;
             } catch (Exception e) {
                 Log.e("Get Url", "Error in downloading: " + e.toString());
+                Toast.makeText(getApplicationContext(), "Please check your internet connection", Toast.LENGTH_SHORT).show();
             }
             return null;
         }
@@ -660,7 +729,8 @@ public class TrainSchedule extends FragmentActivity {
                     LatLng ll = new LatLng(fromLat, fromLng);
                     CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, UPDATE_ZOOM);
                     googleMap.moveCamera(update);
-                }else{}
+                } else {
+                }
             }
         }
     }
@@ -734,7 +804,7 @@ public class TrainSchedule extends FragmentActivity {
             marker.remove();
         }
         MarkerOptions options = new MarkerOptions()
-                .title("Train at: " + myLocality)
+                .title("Train : " + myLocality)
                 .position(new LatLng(lat, lng))
                 .icon(BitmapDescriptorFactory.defaultMarker(
                         BitmapDescriptorFactory.HUE_VIOLET

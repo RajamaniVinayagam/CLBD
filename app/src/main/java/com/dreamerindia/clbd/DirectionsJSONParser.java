@@ -38,9 +38,9 @@ public class DirectionsJSONParser
                 for (int j = 0; j < jLegs.length(); j++)
                 {
 /** Getting distance from the json data */
-                    jDistance = ((JSONObject) jLegs.get(j)).getJSONObject("distance");
+                    jDistance = ((JSONObject) jLegs.get(j)).getJSONObject("duration");
                     HashMap<String, String> hmDistance = new HashMap<String, String>();
-                    hmDistance.put("distance", jDistance.getString("text"));
+                    hmDistance.put("duration", jDistance.getString("value"));
 
 /** Getting duration from the json data */
                     jDuration = ((JSONObject) jLegs.get(j)).getJSONObject("duration");
