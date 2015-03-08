@@ -204,21 +204,6 @@ public class TrainSchedule extends FragmentActivity {
 
                     new GetLocationFromUrl().execute("http://www.embeddedcollege.org/rewebservices/location.txt");
                    // trace();
-//                    String ti = tempExpectTime.getText().toString();
-//                    if (ti.length() != 0) {
-//                        try {
-//                            int mi = Integer.parseInt(ti);
-//                            if (mi < 600 && mi > 470) {
-//                                Toast.makeText(getApplicationContext(), "Train Number : 12345 will reach the station in another 10 minutes", Toast.LENGTH_SHORT).show();
-//                            } else if (mi < 119 && mi > 114) {
-//                                Toast.makeText(getApplicationContext(), "Train Number : 12345 will reach the station in another few minutes", Toast.LENGTH_SHORT).show();
-//                            } else if (mi < 5 && mi > -1) {
-//                                Toast.makeText(getApplicationContext(), "You have boarded in Train Number : 12345... \n Enjoy your journey", Toast.LENGTH_SHORT).show();
-//                            }
-//                        } catch (NumberFormatException nfe) {
-//                            System.out.println("Could not parse " + nfe);
-//                        }
-//                    }
                 }
             }
         }).start();
@@ -271,7 +256,7 @@ public class TrainSchedule extends FragmentActivity {
         if (att.length() == 0) {
             try {
                 mi = Integer.parseInt(timeConvert);
-                Toast.makeText(getApplicationContext(), timeConvert, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getApplicationContext(), timeConvert, Toast.LENGTH_SHORT).show();
                 c.add(Calendar.SECOND, mi);
                 String fTime = df.format(c.getTime());
                 TrainSchedule.this.arrivalTime.setText(fTime);
@@ -730,6 +715,21 @@ public class TrainSchedule extends FragmentActivity {
                     CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, UPDATE_ZOOM);
                     googleMap.moveCamera(update);
                 } else {
+                }
+            }
+            String ti = tempExpectTime.getText().toString();
+            if (ti.length() != 0) {
+                try {
+                    int mi = Integer.parseInt(ti);
+                    if (mi < 600 && mi > 590) {
+                        Toast.makeText(getApplicationContext(),getResources().getString(R.string.trainTen), Toast.LENGTH_SHORT).show();
+                    } else if (mi < 119 && mi > 114) {
+                        Toast.makeText(getApplicationContext(),getResources().getString(R.string.trainFew), Toast.LENGTH_SHORT).show();
+                    } else if (mi < 5 && mi > -1) {
+                        Toast.makeText(getApplicationContext(), getResources().getString(R.string.trainReached), Toast.LENGTH_SHORT).show();
+                    }
+                } catch (NumberFormatException nfe) {
+                    System.out.println("Could not parse " + nfe);
                 }
             }
         }
