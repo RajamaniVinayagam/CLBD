@@ -35,9 +35,15 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -63,12 +69,13 @@ public class TrainSchedule extends FragmentActivity {
     Marker marker;
 
     GoogleMap googleMap;
-    TextView trainStart, trainLocation, expectTime, ll, departTime, arrivalTime, traintemp, tempArrivalTime, tempExpectTime;
+    TextView tloc, trainStart, trainLocation, expectTime, ll, departTime, arrivalTime, traintemp, tempArrivalTime, tempExpectTime;
     EditText myLocation, destination;
     Handler handler = null;
     Runnable runnable = null;
     LocationAddress locationAddress;
     LocationLocality locationLocality;
+    LEDLocation LEDlocation;
     String myLocality;
 
     @Override
@@ -81,6 +88,7 @@ public class TrainSchedule extends FragmentActivity {
         getScreenDimensions();
         locationAddress = new LocationAddress();
         locationLocality = new LocationLocality();
+        tloc = (TextView) findViewById(R.id.tloc);
         trainStart = (TextView) findViewById(R.id.trainStart);
         destination = (EditText) findViewById(R.id.destination);
         trainLocation = (TextView) findViewById(R.id.trainLocation);
@@ -125,12 +133,12 @@ public class TrainSchedule extends FragmentActivity {
         runnable = new Runnable() {
             public void run() {
                 update();
-                handler.postDelayed(runnable, 15000);
+                handler.postDelayed(runnable, 10000);
             }
         };
 
         handler.removeCallbacks(runnable);
-        handler.postDelayed(runnable, 15000);
+        handler.postDelayed(runnable, 10000);
 
     }
 
@@ -203,12 +211,13 @@ public class TrainSchedule extends FragmentActivity {
                 {
 
                     new GetLocationFromUrl().execute("http://www.embeddedcollege.org/rewebservices/location.txt");
-                   // trace();
+                    sendData();
                 }
             }
         }).start();
 
     }
+
     public void trace() {
         String et = arrivalTime.getText().toString();
         String location = myLocation.getText().toString();
@@ -716,15 +725,16 @@ public class TrainSchedule extends FragmentActivity {
                     googleMap.moveCamera(update);
                 } else {
                 }
+                send(result);
             }
             String ti = tempExpectTime.getText().toString();
             if (ti.length() != 0) {
                 try {
                     int mi = Integer.parseInt(ti);
                     if (mi < 600 && mi > 590) {
-                        Toast.makeText(getApplicationContext(),getResources().getString(R.string.trainTen), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), getResources().getString(R.string.trainTen), Toast.LENGTH_SHORT).show();
                     } else if (mi < 119 && mi > 114) {
-                        Toast.makeText(getApplicationContext(),getResources().getString(R.string.trainFew), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), getResources().getString(R.string.trainFew), Toast.LENGTH_SHORT).show();
                     } else if (mi < 5 && mi > -1) {
                         Toast.makeText(getApplicationContext(), getResources().getString(R.string.trainReached), Toast.LENGTH_SHORT).show();
                     }
@@ -799,6 +809,24 @@ public class TrainSchedule extends FragmentActivity {
         }
     }
 
+    private class GeocoderH extends Handler {
+        @Override
+        public void handleMessage(Message message) {
+            String locationAddress;
+            switch (message.what) {
+                case 1:
+                    Bundle bundle = message.getData();
+                    locationAddress = bundle.getString("address");
+                    break;
+                default:
+                    locationAddress = null;
+            }
+
+            tloc.setText(locationAddress);
+//            Toast.makeText(getApplicationContext(), locationAddress, Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public void trainStartingMarker(String myLocality, double lat, double lng) {
         if (marker != null) {
             marker.remove();
@@ -834,4 +862,32 @@ public class TrainSchedule extends FragmentActivity {
 
     }
 
+    public void send(String add) {
+
+        StringTokenizer tokens = new StringTokenizer(add, ",");
+        String first = tokens.nextToken();
+        String second = tokens.nextToken();
+        double fromLat = Double.parseDouble(first);
+        double fromLng = Double.parseDouble(second);
+        LEDlocation.getLoc(fromLat, fromLng,
+                getApplicationContext(), new GeocoderH());
+    }
+
+    public void sendData() {
+
+        HttpClient httpclient = new DefaultHttpClient();
+        HttpPost httppost = new HttpPost("http://EmbeddedCollege.org/rewebservices/locaddress.php");
+        try {
+            String up = tloc.getText().toString();
+            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+            nameValuePairs.add(new BasicNameValuePair("location", up));
+            httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+            httpclient.execute(httppost);
+
+        } catch (ClientProtocolException e) {
+            // TODO Auto-generated catch block
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+        }
+    }
 }
