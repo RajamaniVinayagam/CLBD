@@ -77,6 +77,10 @@ public class TrainSchedule extends FragmentActivity {
     LocationLocality locationLocality;
     LEDLocation LEDlocation;
     String myLocality;
+    double toLat, toLng;
+    LatLng dest = null;
+    LatLng myl = null;
+    LatLng origin=null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,13 +96,13 @@ public class TrainSchedule extends FragmentActivity {
         trainStart = (TextView) findViewById(R.id.trainStart);
         destination = (EditText) findViewById(R.id.destination);
         trainLocation = (TextView) findViewById(R.id.trainLocation);
-        expectTime = (TextView) findViewById(R.id.expectTime);
-        ll = (TextView) findViewById(R.id.ll);
-        arrivalTime = (TextView) findViewById(R.id.arrivalTime);
         departTime = (TextView) findViewById(R.id.departTime);
-        traintemp = (TextView) findViewById(R.id.traintemp);
+        expectTime = (TextView) findViewById(R.id.expectTime);
         tempExpectTime = (TextView) findViewById(R.id.tempExpectTime);
+        arrivalTime = (TextView) findViewById(R.id.arrivalTime);
         tempArrivalTime = (TextView) findViewById(R.id.tempArrivalTime);
+        ll = (TextView) findViewById(R.id.ll);
+        traintemp = (TextView) findViewById(R.id.traintemp);
         myLocation = (EditText) findViewById(R.id.myLocation);
         this.markerPoints = new ArrayList<LatLng>();
         supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.googleMap);
@@ -158,21 +162,20 @@ public class TrainSchedule extends FragmentActivity {
             String second = tokens.nextToken();
             double fromLat = Double.parseDouble(first);
             double fromLng = Double.parseDouble(second);
-            LatLng origin = new LatLng(fromLat, fromLng);
-            LatLng dest = null;
-            LatLng myl = null;
+            origin = new LatLng(fromLat, fromLng);
+
             try {
                 Geocoder gc = new Geocoder(this);
                 List<Address> list = gc.getFromLocationName(location, 1);
                 Address add = list.get(0);
                 String myLoc = add.getLocality();
-                double toLat = add.getLatitude();
-                double toLng = add.getLongitude();
+                toLat = add.getLatitude();
+                toLng = add.getLongitude();
                 myl = new LatLng(toLat, toLng);
                 setMyLocationMarker(myLoc, toLat, toLng);
             } catch (IOException e) {
                 e.printStackTrace();
-                Log.i("Error", "check destination Marker");
+                Log.i("Error", "check My Location Marker");
             }
             try {
                 Geocoder gc = new Geocoder(this);
@@ -187,19 +190,16 @@ public class TrainSchedule extends FragmentActivity {
                 e.printStackTrace();
                 Log.i("Error", "check destination Marker");
             }
-            String urlTwo = TrainSchedule.this.getDirectionsUrl(myl, dest);
+            String urlOne = TrainSchedule.this.getDirectionsUrlOne(origin, myl);
+            DownloadTaskOne downloadTaskOne = new DownloadTaskOne();
+            downloadTaskOne.execute(urlOne);
 
-            DownloadTask downloadTaskTwo = new DownloadTask();
+            String urlTwo = TrainSchedule.this.getDirectionsUrlTwo(myl, dest);
+            DownloadTaskTwo downloadTaskTwo = new DownloadTaskTwo();
             downloadTaskTwo.execute(urlTwo);
-            // Getting URL to the Google Directions API
-            String url = TrainSchedule.this.getDirectionsUrl(origin, myl);
-
-            DownloadTask downloadTask = new DownloadTask();
-
-            // Start downloading json data from Google Directions API
-            downloadTask.execute(url);
-            String urlThree = TrainSchedule.this.getDirectionsUrlTwo(origin, dest);
-            DownloadTaskTWO downloadTaskThree = new DownloadTaskTWO();
+//
+            String urlThree = TrainSchedule.this.getDirectionsUrlThree(origin, dest);
+            DownloadTaskThree downloadTaskThree = new DownloadTaskThree();
             downloadTaskThree.execute(urlThree);
             time();
         }
@@ -209,46 +209,11 @@ public class TrainSchedule extends FragmentActivity {
         new Thread(new Runnable() {
             public void run() {
                 {
-
                     new GetLocationFromUrl().execute("http://www.embeddedcollege.org/rewebservices/location.txt");
                     sendData();
                 }
             }
         }).start();
-
-    }
-
-    public void trace() {
-        String et = arrivalTime.getText().toString();
-        String location = myLocation.getText().toString();
-
-        if (et.length() == 0) {
-
-        } else {
-            String temp = ll.getText().toString();
-            StringTokenizer tokens = new StringTokenizer(temp, ",");
-            String first = tokens.nextToken();
-            String second = tokens.nextToken();
-            double fromLat = Double.parseDouble(first);
-            double fromLng = Double.parseDouble(second);
-            LatLng origin = new LatLng(fromLat, fromLng);
-            LatLng myl = null;
-            try {
-                Geocoder gc = new Geocoder(this);
-                List<Address> list = gc.getFromLocationName(location, 1);
-                Address add = list.get(0);
-                double toLat = add.getLatitude();
-                double toLng = add.getLongitude();
-                myl = new LatLng(toLat, toLng);
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.i("Error", "check timer");
-            }
-            String url = TrainSchedule.this.getDirectionsUrl(origin, myl);
-            DownloadTask downloadTask = new DownloadTask();
-            downloadTask.execute(url);
-            time();
-        }
     }
 
     public void time() {
@@ -299,353 +264,6 @@ public class TrainSchedule extends FragmentActivity {
         height = display.getHeight();
     }
 
-    private String getDirectionsUrl(LatLng origin, LatLng dest) {
-        String url = null;
-        try {        // Origin of route
-            String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
-            //waypoints
-            //    String str_waypoints = "waypoints=" + way.latitude + "," + way.longitude;
-            // Destination of route
-            String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
-
-            // Sensor enabled
-            String sensor = "sensor=false";
-
-            // Building the parameters to the web service
-            String parameters = str_origin + "&" + str_dest + "&" + sensor;
-
-            // Output format
-            String output = "json";
-
-            // Building the url to the web service
-            url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
-            return url;
-        } catch (Exception e) {
-            Toast.makeText(getApplicationContext(), "Please check your Internet connection and try again", Toast.LENGTH_LONG).show();
-        }
-        return url;
-    }
-
-    /**
-     * A method to download json data from url
-     */
-    private String downloadUrl(String strUrl) throws IOException {
-        String data = "";
-        InputStream iStream = null;
-        HttpURLConnection urlConnection = null;
-        try {
-            URL url = new URL(strUrl);
-
-            // Creating an http connection to communicate with url
-            urlConnection = (HttpURLConnection) url.openConnection();
-
-            // Connecting to url
-            urlConnection.connect();
-
-            // Reading data from url
-            iStream = urlConnection.getInputStream();
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
-
-            StringBuffer sb = new StringBuffer();
-
-            String line = "";
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
-            }
-
-            data = sb.toString();
-
-            br.close();
-
-        } catch (Exception e) {
-            Log.d("Exception while downloading url", e.toString());
-        } finally {
-            iStream.close();
-            urlConnection.disconnect();
-        }
-        return data;
-    }
-
-    // Fetches data from url passed
-    private class DownloadTask extends AsyncTask<String, Void, String> {
-        // Downloading data in non-ui thread
-        @Override
-        protected String doInBackground(String... url) {
-
-            // For storing data from web service
-            String data = "";
-
-            try {
-                // Fetching the data from web service
-                data = TrainSchedule.this.downloadUrl(url[0]);
-            } catch (Exception e) {
-                Log.d("Background Task", e.toString());
-            }
-            return data;
-        }
-
-        // Executes in UI thread, after the execution of
-        // doInBackground()
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-
-            ParserTask parserTask = new ParserTask();
-            // Invokes the thread for parsing the JSON data
-            parserTask.execute(result);
-
-
-        }
-    }
-
-    /**
-     * A class to parse the Google Places in JSON format
-     */
-    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
-
-        // Parsing the data in non-ui thread
-        @Override
-        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
-            JSONObject jObject;
-            List<List<HashMap<String, String>>> routes = null;
-
-            try {
-                jObject = new JSONObject(jsonData[0]);
-                DirectionsJSONParser parser = new DirectionsJSONParser();
-
-                // Starts parsing data
-                routes = parser.parse(jObject);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return routes;
-        }
-
-        // Executes in UI thread, after the parsing process
-        @Override
-        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-            ArrayList<LatLng> points = null;
-            PolylineOptions lineOptions = null;
-            MarkerOptions markerOptions = new MarkerOptions();
-            String distance = "";
-            String duration = "";
-
-            if (result.size() < 1) {
-                Toast.makeText(TrainSchedule.this.getBaseContext(), "No Points", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Traversing through all the routes
-            for (int i = 0; i < result.size(); i++) {
-                points = new ArrayList<LatLng>();
-                lineOptions = new PolylineOptions();
-
-                // Fetching i-th route
-                List<HashMap<String, String>> path = result.get(i);
-
-                // Fetching all the points in i-th route
-                for (int j = 0; j < path.size(); j++) {
-                    HashMap<String, String> point = path.get(j);
-
-                    if (j == 0) { // Get distance from the list
-                        distance = point.get("duration");
-                        continue;
-                    } else if (j == 1) { // Get duration from the list
-                        duration = point.get("duration");
-                        continue;
-                    }
-                    double lat = Double.parseDouble(point.get("lat"));
-                    double lng = Double.parseDouble(point.get("lng"));
-                    LatLng position = new LatLng(lat, lng);
-                    points.add(position);
-                }
-
-                // Adding all the points in the route to LineOptions
-                lineOptions.addAll(points);
-                lineOptions.width(3);
-                lineOptions.color(Color.RED);
-            }
-
-            TrainSchedule.this.expectTime.setText(duration);
-            TrainSchedule.this.tempExpectTime.setText(distance);
-
-            // Drawing polyline in the Google Map for the i-th route
-            TrainSchedule.this.googleMap.addPolyline(lineOptions);
-        }
-    }
-
-    private String getDirectionsUrlTwo(LatLng origin, LatLng dest) {
-        // Origin of route
-        String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
-        //waypoints
-        //    String str_waypoints = "waypoints=" + way.latitude + "," + way.longitude;
-        // Destination of route
-        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
-
-        // Sensor enabled
-        String sensor = "sensor=false";
-
-        // Building the parameters to the web service
-        String parameters = str_origin + "&" + str_dest + "&" + sensor;
-
-        // Output format
-        String output = "json";
-
-        // Building the url to the web service
-        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
-
-        return url;
-    }
-
-    /**
-     * A method to download json data from url
-     */
-    private String downloadUrlTWO(String strUrl) throws IOException {
-        String data = "";
-        InputStream iStream = null;
-        HttpURLConnection urlConnection = null;
-        try {
-            URL url = new URL(strUrl);
-
-            // Creating an http connection to communicate with url
-            urlConnection = (HttpURLConnection) url.openConnection();
-
-            // Connecting to url
-            urlConnection.connect();
-
-            // Reading data from url
-            iStream = urlConnection.getInputStream();
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
-
-            StringBuffer sb = new StringBuffer();
-
-            String line = "";
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
-            }
-
-            data = sb.toString();
-
-            br.close();
-
-        } catch (Exception e) {
-            Log.d("Exception while downloading url", e.toString());
-        } finally {
-            iStream.close();
-            urlConnection.disconnect();
-        }
-        return data;
-    }
-
-    // Fetches data from url passed
-    private class DownloadTaskTWO extends AsyncTask<String, Void, String> {
-        // Downloading data in non-ui thread
-        @Override
-        protected String doInBackground(String... url) {
-
-            // For storing data from web service
-            String data = "";
-
-            try {
-                // Fetching the data from web service
-                data = TrainSchedule.this.downloadUrlTWO(url[0]);
-            } catch (Exception e) {
-                Log.d("Background Task", e.toString());
-            }
-            return data;
-        }
-
-        // Executes in UI thread, after the execution of
-        // doInBackground()
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-
-            ParserTaskTwo parserTask = new ParserTaskTwo();
-            // Invokes the thread for parsing the JSON data
-            parserTask.execute(result);
-
-
-        }
-    }
-
-    /**
-     * A class to parse the Google Places in JSON format
-     */
-
-    private class ParserTaskTwo extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
-
-        // Parsing the data in non-ui thread
-        @Override
-        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
-            JSONObject jObject;
-            List<List<HashMap<String, String>>> routes = null;
-
-            try {
-                jObject = new JSONObject(jsonData[0]);
-                DirectionsJSONParser parser = new DirectionsJSONParser();
-
-                // Starts parsing data
-                routes = parser.parse(jObject);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return routes;
-        }
-
-        // Executes in UI thread, after the parsing process
-        @Override
-        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-            ArrayList<LatLng> points = null;
-            PolylineOptions lineOptions = null;
-            MarkerOptions markerOptions = new MarkerOptions();
-            String durationValue = "";
-            String duration = "";
-
-            if (result.size() < 1) {
-                Toast.makeText(TrainSchedule.this.getBaseContext(), "No Points", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Traversing through all the routes
-            for (int i = 0; i < result.size(); i++) {
-                points = new ArrayList<LatLng>();
-                lineOptions = new PolylineOptions();
-
-                // Fetching i-th route
-                List<HashMap<String, String>> path = result.get(i);
-
-                // Fetching all the points in i-th route
-                for (int j = 0; j < path.size(); j++) {
-                    HashMap<String, String> point = path.get(j);
-
-                    if (j == 0) { // Get distance from the list
-                        durationValue = point.get("duration");
-                        continue;
-                    } else if (j == 1) { // Get duration from the list
-                        duration = point.get("duration");
-                        continue;
-                    }
-                    double lat = Double.parseDouble(point.get("lat"));
-                    double lng = Double.parseDouble(point.get("lng"));
-                    LatLng position = new LatLng(lat, lng);
-                    points.add(position);
-                }
-
-                // Adding all the points in the route to LineOptions
-                lineOptions.addAll(points);
-                lineOptions.width(3);
-                lineOptions.color(Color.RED);
-            }
-            TrainSchedule.this.tempArrivalTime.setText(durationValue);
-//            Toast.makeText(getApplicationContext(), durationValue, Toast.LENGTH_LONG).show();
-            // Drawing polyline in the Google Map for the i-th route
-            TrainSchedule.this.googleMap.addPolyline(lineOptions);
-        }
-    }
-
     private class GetLocationFromUrl extends AsyncTask<String, Void, String> {
         @Override
         protected void onPreExecute() {
@@ -675,6 +293,7 @@ public class TrainSchedule extends FragmentActivity {
                 String result = total.toString();
                 Log.i("Get URL", "Downloaded string: " + result);
                 return result;
+
             } catch (Exception e) {
                 Log.e("Get Url", "Error in downloading: " + e.toString());
                 Toast.makeText(getApplicationContext(), "Please check your internet connection", Toast.LENGTH_SHORT).show();
@@ -688,7 +307,6 @@ public class TrainSchedule extends FragmentActivity {
             ll.setText(result);
             if (result == null) {
                 trainLocation.setText("");
-//                trainStart.setText("");
                 Toast.makeText(getApplicationContext(), "Train schedule not available", Toast.LENGTH_LONG).show();
             } else {
                 StringTokenizer tokens = new StringTokenizer(result, ",");
@@ -726,6 +344,15 @@ public class TrainSchedule extends FragmentActivity {
                 } else {
                 }
                 send(result);
+                String et = arrivalTime.getText().toString();
+                if (et.length() == 0) {
+                } else {
+                    LatLng origin = new LatLng(fromLat, fromLng);
+                    LatLng myl = new LatLng(toLat, toLng);
+                    String url = TrainSchedule.this.getDirectionsUrlOne(origin, myl);
+                    DownloadTaskOne downloadTaskOne = new DownloadTaskOne();
+                    downloadTaskOne.execute(url);
+                }
             }
             String ti = tempExpectTime.getText().toString();
             if (ti.length() != 0) {
@@ -768,7 +395,6 @@ public class TrainSchedule extends FragmentActivity {
         alertDialog.show();
     }
 
-
     public void hideSoftKeyboard(View v) {
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
@@ -786,9 +412,7 @@ public class TrainSchedule extends FragmentActivity {
                 default:
                     locationAddress = null;
             }
-
             trainLocation.setText(locationAddress);
-//            Toast.makeText(getApplicationContext(), locationAddress, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -799,7 +423,7 @@ public class TrainSchedule extends FragmentActivity {
             switch (message.what) {
                 case 1:
                     Bundle bundle = message.getData();
-                    locationAddress = bundle.getString("address");
+                    locationAddress = bundle.getString("add");
                     break;
                 default:
                     locationAddress = null;
@@ -821,9 +445,7 @@ public class TrainSchedule extends FragmentActivity {
                 default:
                     locationAddress = null;
             }
-
             tloc.setText(locationAddress);
-//            Toast.makeText(getApplicationContext(), locationAddress, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -888,6 +510,514 @@ public class TrainSchedule extends FragmentActivity {
             // TODO Auto-generated catch block
         } catch (IOException e) {
             // TODO Auto-generated catch block
+        }
+    }
+
+    private String getDirectionsUrlOne(LatLng origin, LatLng dest) {
+        String url = null;
+        try {        // Origin of route
+            String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
+            //waypoints
+            //    String str_waypoints = "waypoints=" + way.latitude + "," + way.longitude;
+            // Destination of route
+            String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+
+            // Sensor enabled
+            String sensor = "sensor=false";
+
+            // Building the parameters to the web service
+            String parameters = str_origin + "&" + str_dest + "&" + sensor;
+
+            // Output format
+            String output = "json";
+
+            // Building the url to the web service
+            url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
+            return url;
+        } catch (Exception e) {
+            Toast.makeText(getApplicationContext(), "Please check your Internet connection and try again", Toast.LENGTH_LONG).show();
+        }
+        return url;
+    }
+
+    /**
+     * A method to download json data from url
+     */
+    private String downloadUrlOne(String strUrl) throws IOException {
+        String data = "";
+        InputStream iStream = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(strUrl);
+
+            // Creating an http connection to communicate with url
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            // Connecting to url
+            urlConnection.connect();
+
+            // Reading data from url
+            iStream = urlConnection.getInputStream();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
+
+            StringBuffer sb = new StringBuffer();
+
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+
+            data = sb.toString();
+
+            br.close();
+
+        } catch (Exception e) {
+            Log.d("Exception while downloading url", e.toString());
+        } finally {
+            iStream.close();
+            urlConnection.disconnect();
+        }
+        return data;
+    }
+
+    // Fetches data from url passed
+    private class DownloadTaskOne extends AsyncTask<String, Void, String> {
+        // Downloading data in non-ui thread
+        @Override
+        protected String doInBackground(String... url) {
+
+            // For storing data from web service
+            String data = "";
+
+            try {
+                // Fetching the data from web service
+                data = TrainSchedule.this.downloadUrlOne(url[0]);
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
+            }
+            return data;
+        }
+
+        // Executes in UI thread, after the execution of
+        // doInBackground()
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+            ParserTaskOne parserTask = new ParserTaskOne();
+            // Invokes the thread for parsing the JSON data
+            parserTask.execute(result);
+
+
+        }
+    }
+
+    /**
+     * A class to parse the Google Places in JSON format
+     */
+    private class ParserTaskOne extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+
+        // Parsing the data in non-ui thread
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+
+            try {
+                jObject = new JSONObject(jsonData[0]);
+                DirectionsJSONParser parser = new DirectionsJSONParser();
+
+                // Starts parsing data
+                routes = parser.parse(jObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        // Executes in UI thread, after the parsing process
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+            ArrayList<LatLng> points = null;
+            PolylineOptions lineOptions = null;
+            MarkerOptions markerOptions = new MarkerOptions();
+            String distance = "";
+            String duration = "";
+
+            if (result.size() < 1) {
+                Toast.makeText(TrainSchedule.this.getBaseContext(), "No Points", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Traversing through all the routes
+            for (int i = 0; i < result.size(); i++) {
+                points = new ArrayList<LatLng>();
+                lineOptions = new PolylineOptions();
+
+                // Fetching i-th route
+                List<HashMap<String, String>> path = result.get(i);
+
+                // Fetching all the points in i-th route
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap<String, String> point = path.get(j);
+
+                    if (j == 0) { // Get distance from the list value
+                        distance = point.get("duration");
+                        continue;
+                    } else if (j == 1) { // Get duration from the list text
+                        duration = point.get("duration");
+                        continue;
+                    }
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lng = Double.parseDouble(point.get("lng"));
+                    LatLng position = new LatLng(lat, lng);
+                    points.add(position);
+                }
+
+                // Adding all the points in the route to LineOptions
+                lineOptions.addAll(points);
+                lineOptions.width(3);
+                lineOptions.color(Color.RED);
+            }
+
+            TrainSchedule.this.expectTime.setText(duration);
+            TrainSchedule.this.tempExpectTime.setText(distance);
+
+            // Drawing polyline in the Google Map for the i-th route
+            TrainSchedule.this.googleMap.addPolyline(lineOptions);
+        }
+    }
+
+    private String getDirectionsUrlThree(LatLng origin, LatLng dest) {
+        // Origin of route
+        String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
+        //waypoints
+        //    String str_waypoints = "waypoints=" + way.latitude + "," + way.longitude;
+        // Destination of route
+        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+
+        // Sensor enabled
+        String sensor = "sensor=false";
+
+        // Building the parameters to the web service
+        String parameters = str_origin + "&" + str_dest + "&" + sensor;
+
+        // Output format
+        String output = "json";
+
+        // Building the url to the web service
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
+
+        return url;
+    }
+
+
+    /**
+     * A method to download json data from url
+     */
+    private String downloadUrlThree(String strUrl) throws IOException {
+        String data = "";
+        InputStream iStream = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(strUrl);
+
+            // Creating an http connection to communicate with url
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            // Connecting to url
+            urlConnection.connect();
+
+            // Reading data from url
+            iStream = urlConnection.getInputStream();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
+
+            StringBuffer sb = new StringBuffer();
+
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+
+            data = sb.toString();
+
+            br.close();
+
+        } catch (Exception e) {
+            Log.d("Exception while downloading url", e.toString());
+        } finally {
+            iStream.close();
+            urlConnection.disconnect();
+        }
+        return data;
+    }
+
+    // Fetches data from url passed
+    private class DownloadTaskThree extends AsyncTask<String, Void, String> {
+        // Downloading data in non-ui thread
+        @Override
+        protected String doInBackground(String... url) {
+
+            // For storing data from web service
+            String data = "";
+
+            try {
+                // Fetching the data from web service
+                data = TrainSchedule.this.downloadUrlThree(url[0]);
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
+            }
+            return data;
+        }
+
+        // Executes in UI thread, after the execution of
+        // doInBackground()
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+            ParserTaskThree parserTask = new ParserTaskThree();
+            // Invokes the thread for parsing the JSON data
+            parserTask.execute(result);
+
+
+        }
+    }
+
+    private class ParserTaskThree extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+
+        // Parsing the data in non-ui thread
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+
+            try {
+                jObject = new JSONObject(jsonData[0]);
+                DirectionsJSONParser parser = new DirectionsJSONParser();
+
+                // Starts parsing data
+                routes = parser.parse(jObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        // Executes in UI thread, after the parsing process
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+            ArrayList<LatLng> points = null;
+            PolylineOptions lineOptions = null;
+            MarkerOptions markerOptions = new MarkerOptions();
+            String durationValue = "";
+            String duration = "";
+
+            if (result.size() < 1) {
+                Toast.makeText(TrainSchedule.this.getBaseContext(), "No Points", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Traversing through all the routes
+            for (int i = 0; i < result.size(); i++) {
+                points = new ArrayList<LatLng>();
+                lineOptions = new PolylineOptions();
+
+                // Fetching i-th route
+                List<HashMap<String, String>> path = result.get(i);
+
+                // Fetching all the points in i-th route
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap<String, String> point = path.get(j);
+
+                    if (j == 0) { // Get distance from the list
+                        durationValue = point.get("duration");
+                        continue;
+                    } else if (j == 1) { // Get duration from the list
+                        duration = point.get("duration");
+                        continue;
+                    }
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lng = Double.parseDouble(point.get("lng"));
+                    LatLng position = new LatLng(lat, lng);
+                    points.add(position);
+                }
+            }
+            TrainSchedule.this.tempArrivalTime.setText(durationValue);
+        }
+    }
+    private String getDirectionsUrlTwo(LatLng origin, LatLng dest) {
+        String url = null;
+        try {        // Origin of route
+            String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
+            //waypoints
+            //    String str_waypoints = "waypoints=" + way.latitude + "," + way.longitude;
+            // Destination of route
+            String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+
+            // Sensor enabled
+            String sensor = "sensor=false";
+
+            // Building the parameters to the web service
+            String parameters = str_origin + "&" + str_dest + "&" + sensor;
+
+            // Output format
+            String output = "json";
+
+            // Building the url to the web service
+            url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
+            return url;
+        } catch (Exception e) {
+            Toast.makeText(getApplicationContext(), "Please check your Internet connection and try again", Toast.LENGTH_LONG).show();
+        }
+        return url;
+    }
+
+    /**
+     * A method to download json data from url
+     */
+    private String downloadUrlTwo(String strUrl) throws IOException {
+        String data = "";
+        InputStream iStream = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(strUrl);
+
+            // Creating an http connection to communicate with url
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            // Connecting to url
+            urlConnection.connect();
+
+            // Reading data from url
+            iStream = urlConnection.getInputStream();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
+
+            StringBuffer sb = new StringBuffer();
+
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+
+            data = sb.toString();
+
+            br.close();
+
+        } catch (Exception e) {
+            Log.d("Exception while downloading url", e.toString());
+        } finally {
+            iStream.close();
+            urlConnection.disconnect();
+        }
+        return data;
+    }
+
+    // Fetches data from url passed
+    private class DownloadTaskTwo extends AsyncTask<String, Void, String> {
+        // Downloading data in non-ui thread
+        @Override
+        protected String doInBackground(String... url) {
+
+            // For storing data from web service
+            String data = "";
+
+            try {
+                // Fetching the data from web service
+                data = TrainSchedule.this.downloadUrlTwo(url[0]);
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
+            }
+            return data;
+        }
+
+        // Executes in UI thread, after the execution of
+        // doInBackground()
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+            ParserTaskTwo parserTask = new ParserTaskTwo();
+            // Invokes the thread for parsing the JSON data
+            parserTask.execute(result);
+
+
+        }
+    }
+
+    /**
+     * A class to parse the Google Places in JSON format
+     */
+    private class ParserTaskTwo extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+
+        // Parsing the data in non-ui thread
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+
+            try {
+                jObject = new JSONObject(jsonData[0]);
+                DirectionsJSONParser parser = new DirectionsJSONParser();
+
+                // Starts parsing data
+                routes = parser.parse(jObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        // Executes in UI thread, after the parsing process
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+            ArrayList<LatLng> points = null;
+            PolylineOptions lineOptions = null;
+            MarkerOptions markerOptions = new MarkerOptions();
+            String distance = "";
+            String duration = "";
+
+            if (result.size() < 1) {
+                Toast.makeText(TrainSchedule.this.getBaseContext(), "No Points", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Traversing through all the routes
+            for (int i = 0; i < result.size(); i++) {
+                points = new ArrayList<LatLng>();
+                lineOptions = new PolylineOptions();
+
+                // Fetching i-th route
+                List<HashMap<String, String>> path = result.get(i);
+
+                // Fetching all the points in i-th route
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap<String, String> point = path.get(j);
+
+                    if (j == 0) { // Get distance from the list
+                        distance = point.get("duration");
+                        continue;
+                    } else if (j == 1) { // Get duration from the list
+                        duration = point.get("duration");
+                        continue;
+                    }
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lng = Double.parseDouble(point.get("lng"));
+                    LatLng position = new LatLng(lat, lng);
+                    points.add(position);
+                }
+
+                // Adding all the points in the route to LineOptions
+                lineOptions.addAll(points);
+                lineOptions.width(3);
+                lineOptions.color(Color.RED);
+            }
+//            TrainSchedule.this.expectTime.setText(duration);
+//            TrainSchedule.this.tempExpectTime.setText(distance);
+            TrainSchedule.this.googleMap.addPolyline(lineOptions);
         }
     }
 }

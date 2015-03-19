@@ -29,11 +29,12 @@ public class LocationLocality {
                     latitude, longitude, 1);
             if (addressList != null && addressList.size() > 0) {
                 Address address = addressList.get(0);
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < 1; i++) {
-                    sb.append(address.getAddressLine(i));
-                }
-                result = sb.toString();
+                result = address.getLocality();
+//                StringBuilder sb = new StringBuilder();
+//                for (int i = 0; i < 1; i++) {
+//                    sb.append(address.getAddressLine(i));
+//                }
+//                result = sb.toString();
             }
         } catch (IOException e) {
             Log.e(TAG, "Unable connect to Geocoder", e);
@@ -43,13 +44,13 @@ public class LocationLocality {
             if (result != null) {
                 message.what = 1;
                 Bundle bundle = new Bundle();
-                bundle.putString("address", result);
+                bundle.putString("add", result);
                 message.setData(bundle);
             } else {
                 message.what = 1;
                 Bundle bundle = new Bundle();
                 result = "";
-                bundle.putString("address", result);
+                bundle.putString("add", result);
                 message.setData(bundle);
             }
             message.sendToTarget();
